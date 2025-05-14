@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moisture Content Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Moisture Content Predictor</h1>
+        
+        <div class="input-form">
+            <h2>Enter Parameters</h2>
+            <form id="prediction-form">
+                <div class="form-group">
+                    <label for="brix">BRIX:</label>
+                    <input type="number" id="brix" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="ph">PH:</label>
+                    <input type="number" id="ph" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="acidity">ACIDITY:</label>
+                    <input type="number" id="acidity" step="0.01" required>
+                </div>
+                <button type="submit">Predict Moisture</button>
+            </form>
+        </div>
+        
+        <div class="result-container">
+            <h2>Prediction Result</h2>
+            <div id="result">
+                <p>Enter values and click "Predict" to see results</p>
+                <div id="prediction-output"></div>
+                <div id="input-values"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('prediction-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Get input values
+            const brix = parseFloat(document.getElementById('brix').value);
+            const ph = parseFloat(document.getElementById('ph').value);
+            const acidity = parseFloat(document.getElementById('acidity').value);
+            
+            // Prepare request data
+            const requestData = {
+                brix: brix,
+                ph: ph,
+                acidity: acidity
+            };
+            
+            try {
+                // Show loading state
+                document.getElementById('result').innerHTML = '<p>Calculating prediction...</p>';
+                
+                // Make API request
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Display results
+                    document.getElementById('result').innerHTML = `
+                        <div id="prediction-output">
+                            <h3>Moisture: ${data.prediction}</h3>
+                        </div>
+                        <div id="input-values">
+                            <h4>Input Values:</h4>
+                            <p>BRIX: ${data.input.BRIX}</p>
+                            <p>PH: ${data.input.PH}</p>
+                            <p>ACIDITY: ${data.input.ACIDITY}</p>
+                        </div>
+                    `;
+                } else {
+                    // Display error
+                    document.getElementById('result').innerHTML = `
+                        <p class="error">Error: ${data.message}</p>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <p class="error">Network error: ${error.message}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
